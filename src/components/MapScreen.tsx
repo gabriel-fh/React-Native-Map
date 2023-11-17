@@ -1,22 +1,18 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View, Button } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { StyleSheet } from "react-native";
 import { Dimensions } from "react-native";
+
 import {
   requestForegroundPermissionsAsync,
   getCurrentPositionAsync,
-  watchPositionAsync,
   LocationObject,
-  LocationAccuracy,
+  LocationAccuracy
 } from "expo-location";
 
 export default function MapScreen() {
   const [location, setLocation] = useState<LocationObject | null>(null);
-  const [markerCoordinate, setMarkerCoordinate] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
 
   const mapRef = useRef<MapView>(null);
 
@@ -24,54 +20,23 @@ export default function MapScreen() {
     const { granted } = await requestForegroundPermissionsAsync();
 
     if (granted) {
-      const currentPosition = await getCurrentPositionAsync({});
+      const currentPosition = await getCurrentPositionAsync({
+        accuracy: LocationAccuracy.Highest
+      });
       setLocation(currentPosition);
-      setMarkerCoordinate({
-        latitude: currentPosition.coords.latitude,
-        longitude: currentPosition.coords.longitude,
+      mapRef.current?.animateCamera({
+        center: currentPosition.coords
       });
     }
   }
 
-  useEffect(() => {
-    requestLocationPermissions();
-  }, []);
-
-  useEffect(() => {
-    watchPositionAsync(
-      {
-        accuracy: LocationAccuracy.Highest,
-        timeInterval: 1000,
-        distanceInterval: 1,
-      },
-      (response) => {
-        setLocation(response);
-        setMarkerCoordinate({
-          latitude: response.coords.latitude,
-          longitude: response.coords.longitude,
-        });
-        mapRef.current?.animateCamera({
-          center: response.coords,
-        });
-      }
-    );
-  }, []);
-
-  const handleMapPress = (event: any) => {
-    const { coordinate } = event.nativeEvent;
-    setMarkerCoordinate(coordinate);
-    setLocation({
-      coords: {
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-      },
-    });
+  const handleGetLocation = async () => {
+    await requestLocationPermissions();
   };
-
-  console.log(location)
 
   return (
     <View style={styles.container}>
+      <Button title="Obter Localização" onPress={handleGetLocation} />
       {location && (
         <MapView
           ref={mapRef}
@@ -80,17 +45,15 @@ export default function MapScreen() {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
+            longitudeDelta: 0.005
           }}
-          onPress={handleMapPress}
         >
-          {markerCoordinate && (
-            <Marker
-              coordinate={markerCoordinate}
-              title="Você está aqui"
-              description="Sua localização atual"
-            />
-          )}
+          <Marker
+            coordinate={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude
+            }}
+          />
         </MapView>
       )}
     </View>
@@ -102,10 +65,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
   map: {
     width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
-  },
+    height: Dimensions.get("window").height
+  }
 });
