@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
-import { View, Button } from "react-native";
+import { View, Button, TextInput } from "react-native";
 import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
-import {Platform, StyleSheet} from 'react-native';
+import { StyleSheet } from "react-native";
 import { Dimensions } from "react-native";
+import LocationSearchbar from "./LocationSearchbar";
 
 import {
   requestForegroundPermissionsAsync,
@@ -26,12 +27,10 @@ export default function MapScreen() {
       setLocation(currentPosition);
       mapRef.current?.animateCamera({
         center: currentPosition.coords,
-         zoom: 17
+        zoom: 17,
       });
     }
   }
-
-  Platform.OS === 'ios' ? console.log("true") : console.log("false")
 
   const handleGetLocation = async () => {
     await requestLocationPermissions();
@@ -40,19 +39,22 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       {location ? (
-        <MapView
-          ref={mapRef}
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          initialRegion={{
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.002, 
-            longitudeDelta: 0.002, 
-          }}
-          showsUserLocation={true}
-          loadingEnabled={true}
-        ></MapView>
+        <>
+          <LocationSearchbar />
+          <MapView
+            ref={mapRef}
+            style={styles.map}
+            provider={PROVIDER_GOOGLE}
+            initialRegion={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.002,
+              longitudeDelta: 0.002,
+            }}
+            showsUserLocation={true}
+            loadingEnabled={true}
+          />
+        </>
       ) : (
         <Button title="Obter Localização" onPress={handleGetLocation} />
       )}
@@ -64,11 +66,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    alignItems: "center",
+    alignitems: "center",
     justifyContent: "center",
   },
   map: {
     width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
+    height: "100%",
   },
 });
