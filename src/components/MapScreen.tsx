@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import { View, Button, TouchableOpacity, Text } from "react-native";
-import MapView, { PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { StyleSheet } from "react-native";
 import { Dimensions } from "react-native";
 import LocationSearchbar from "./LocationSearchbar";
-
+import Geocoder from "react-native-geocoding";
+import { GOOGLE_API_KEY } from "../../environments";
 import {
   requestForegroundPermissionsAsync,
   getCurrentPositionAsync,
@@ -12,10 +13,40 @@ import {
   LocationAccuracy,
 } from "expo-location";
 
+
 export default function MapScreen() {
   const [location, setLocation] = useState<LocationObject | null>(null);
-
   const mapRef = useRef<MapView>(null);
+  const [address, setAddress] = useState(null);
+
+
+  Geocoder.init(GOOGLE_API_KEY);
+  async function getAddressFromCoords(latitude: number, longitude: number) {
+    return Geocoder.from(latitude, longitude)
+      .then(json => {
+        // console.log(json)
+        const street = json.results[0].address_components[1].short_name;
+        const number = json.results[0].address_components[0].short_name;
+        const neighborhood = json.results[0].address_components[2].short_name
+        const city = json.results[0].address_components[3].short_name
+        const state = json.results[0].address_components[4].short_name
+        const country = json.results[0].address_components[5].short_name
+        const cep = json.results[0].address_components[6].short_name
+        for (const iterator of json.results[0].address_components) {
+          console.log(iterator)
+          
+        }
+        return `${street}, ${number}, ${neighborhood} - ${city}, ${state}, ${country}, ${cep}`;
+
+        // console.log(json.results[0].address_components[3])
+        console.log('--------------------------------------------------')
+      })
+      .catch(error => {
+        console.warn(error);
+        return null; // Retorne null em caso de erro
+      });
+  }
+  
 
   async function requestLocationPermissions() {
     const { granted } = await requestForegroundPermissionsAsync();
@@ -29,6 +60,8 @@ export default function MapScreen() {
         center: currentPosition.coords,
         zoom: 17,
       });
+
+       
     }
   }
 
@@ -44,6 +77,8 @@ export default function MapScreen() {
         latitudeDelta: 0.002,
         longitudeDelta: 0.002,
       });
+
+      
     }
   }, [location]);
 
@@ -64,12 +99,26 @@ export default function MapScreen() {
             }}
             showsUserLocation={true}
             loadingEnabled={true}
-          />
+            onRegionChangeComplete={async (region) => {
+              const newAddress = await getAddressFromCoords(region.latitude, region.longitude);
+              setAddress(newAddress);
+            }}
+          >
+            <Marker
+              coordinate={{
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+              }}
+            />
+          </MapView>
           <TouchableOpacity onPress={handleGetLocation} style={styles.target}>
             <Text style={{ color: "#000", fontSize: 25, textAlign: "center" }}>
               ⌖
             </Text>
           </TouchableOpacity>
+          <View style={{height: 300}}>
+            <Text >{address}</Text>
+          </View>
         </>
       ) : (
         <Button title="Obter Localização" onPress={handleGetLocation} />
@@ -95,7 +144,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     position: "absolute",
     right: 15,
-    bottom: 100,
+    bottom: 200,
     borderRadius: 4,
     shadowColor: "#000000",
     shadowOffset: {

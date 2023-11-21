@@ -18,7 +18,9 @@ interface Location {
 export default function LocationSearchbar({setLocation}: any) {
   
   function onPlaceSelected(data: GooglePlaceData | null, details: GooglePlaceDetail | null) {
-    console.log(details);
+
+    // console.log(details)
+
     const location: Location = {
       coords: {
         latitude: details?.geometry.location.lat || 0,
