@@ -1,27 +1,63 @@
 import React from "react";
 import { View } from "react-native";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import { GooglePlaceData, GooglePlaceDetail, GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { StyleSheet } from "react-native";
-import { GOOGLE_API_KEY } from "./../../environments";
-
+import { GOOGLE_API_KEY } from "../../environments";
 import {} from "../../environments";
+import  Constants  from "expo-constants";
 
-export default function LocationSearchbar() {
+interface Coords {
+  latitude: number;
+  longitude: number;
+}
+
+interface Location {
+  coords: Coords;
+}
+
+export default function LocationSearchbar({setLocation}: any) {
+  
+  function onPlaceSelected(data: GooglePlaceData | null, details: GooglePlaceDetail | null) {
+    console.log(details);
+    const location: Location = {
+      coords: {
+        latitude: details?.geometry.location.lat || 0,
+        longitude: details?.geometry.location.lng || 0,
+      }
+    }
+    setLocation(location)
+  }
+
+
+
   return (
     <View style={styles.searchContainer}>
       <GooglePlacesAutocomplete
         styles={{
-          container: styles.autocompleteContainer,
           textInput: styles.textInput,
-          predefinedPlacesDescription: styles.description,
+          listView: {
+            alignSelf: "center",
+            // Estilos para a lista de sugestões
+            borderRadius: 8,
+            flex: 1,
+          },
+          description: {
+            // Estilos para a descrição das sugestões
+            paddingLeft: 33,
+          },
+          row: {
+            // Estilos para a linha individual de cada sugestão
+          },
+          separator: {
+            height: 0,
+          },
         }}
+        
         placeholder="Procure seu endereço ou região de entrega"
-        onPress={(data, details = null) => {
-          // 'details' is provided when fetchDetails = true
-          console.log(data, details);
-        }}
+        fetchDetails
+        onPress={onPlaceSelected}
         query={{
-          key: { GOOGLE_API_KEY },
+          key: GOOGLE_API_KEY,
           language: "pt-BR", // Idioma da pesquisa
         }}
       />
@@ -32,7 +68,7 @@ export default function LocationSearchbar() {
 const styles = StyleSheet.create({
   searchContainer: {
     position: "absolute",
-    top: 100,
+    top: Constants.statusBarHeight,
     left: 10,
     right: "50%",
     width: "95%",
@@ -48,15 +84,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  autocompleteContainer: {
-    flex: 1,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 200,
-    borderRadius: 8,
-  },
   textInput: {
     height: 40,
     marginTop: 5,
@@ -65,9 +92,6 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
     fontSize: 14,
-    paddingLeft:40
-  },
-  description: {
-    fontWeight: "bold",
+    paddingLeft: 40,
   },
 });
